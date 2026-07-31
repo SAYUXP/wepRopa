@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venta de Ropa</title>
+    <link rel="stylesheet" href="css.css">
+</head>
+<body>
+
+    <!-- Encabezado con Detector de Triple Clic -->
+    <header class="main-header">
+        <h1 id="titulo-principal">Venta de Ropa</h1>
+    </header>
+
+    <!-- Barra de Control del Administrador (Oculta por defecto) -->
+    <div id="admin-bar" class="admin-bar hidden">
+        <span>🛠️ Modo Edición Activo</span>
+        <div class="admin-actions">
+            <button id="btn-open-add-modal" class="btn-admin-act">+ Agregar Producto</button>
+            <button id="btn-logout" class="btn-admin-act btn-logout">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <!-- Sub-barras de filtros -->
+    <nav class="sub-bar-container">
+        <div class="sub-bar">
+            <button class="btn-filter active" data-filter-type="categoria" data-filter-value="todos">✨ Toda las Prendas</button>
+            <button class="btn-filter" data-filter-type="categoria" data-filter-value="cabeza">🧢 Cabeza</button>
+            <button class="btn-filter" data-filter-type="categoria" data-filter-value="superior">👕 Parte superior</button>
+            <button class="btn-filter" data-filter-type="categoria" data-filter-value="inferior">👖 Parte inferior</button>
+            <button class="btn-filter" data-filter-type="categoria" data-filter-value="pies">🧦 Pies</button>
+            <button class="btn-filter" data-filter-type="categoria" data-filter-value="manos">🧤 Manos</button>
+            <button class="btn-filter" data-filter-type="categoria" data-filter-value="interior">👙🩲 Ropa interior</button>
+        </div>
+    </nav>
+
+    <nav class="sub-bar-container">
+        <div class="sub-bar">
+            <button class="btn-filter active" data-filter-type="genero" data-filter-value="todos">👥 Todos</button>
+            <button class="btn-filter" data-filter-type="genero" data-filter-value="hombre">Hombre</button>
+            <button class="btn-filter" data-filter-type="genero" data-filter-value="mujer">Mujer</button>
+            <button class="btn-filter" data-filter-type="genero" data-filter-value="mixto">Mixto</button>
+        </div>
+    </nav>
+
+    <nav class="sub-bar-container">
+        <div class="sub-bar">
+            <button class="btn-filter active" data-filter-type="clima" data-filter-value="todos">🌤️ Todo Clima</button>
+            <button class="btn-filter" data-filter-type="clima" data-filter-value="frio">❄️ Frío</button>
+            <button class="btn-filter" data-filter-type="clima" data-filter-value="calor">☀️ Calor</button>
+            <button class="btn-filter" data-filter-type="clima" data-filter-value="lluvia">🌧️ Lluvia</button>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="container">
+        <section id="product-grid" class="product-grid">
+            <!-- Los productos se cargarán dinámicamente desde Firebase -->
+        </section>
+    </main>
+
+    <!-- Modal del Carrito -->
+    <div id="modal-carrito" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tu Carrito de Compras</h2>
+                <button id="btn-cerrar-modal" class="btn-close">&times;</button>
+            </div>
+            <div id="cart-items-container" class="cart-items"></div>
+            <div class="modal-footer">
+                <div class="total-row">
+                    <span>Total:</span>
+                    <strong id="modal-cart-total">$0</strong>
+                </div>
+                <button id="btn-contactar" class="btn-contact">Contactar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Login Administrador (Firebase Auth) -->
+    <div id="modal-login" class="modal-overlay">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h2>Acceso Administrador</h2>
+                <button id="btn-cerrar-login" class="btn-close">&times;</button>
+            </div>
+            <form id="form-login" class="admin-form">
+                <input type="email" id="login-user" placeholder="Correo de Firebase" required>
+                <input type="password" id="login-password" placeholder="Contraseña" required>
+                <button type="submit" class="btn-contact">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Agregar Nuevo Producto -->
+    <div id="modal-add-product" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agregar Nuevo Producto</h2>
+                <button id="btn-cerrar-add" class="btn-close">&times;</button>
+            </div>
+            <form id="form-add-product" class="admin-form">
+                <input type="text" id="add-title" placeholder="Nombre de la prenda" required>
+                <input type="number" id="add-price" placeholder="Precio ($)" required>
+                <input type="url" id="add-image" placeholder="URL de la imagen (https://...)" required>
+                <input type="text" id="add-size" placeholder="Talle (ej: M, L, Único)" required>
+                
+                <label>Categoría:</label>
+                <select id="add-category">
+                    <option value="superior">Parte superior</option>
+                    <option value="inferior">Parte inferior</option>
+                    <option value="cabeza">Cabeza</option>
+                    <option value="pies">Pies</option>
+                    <option value="manos">Manos</option>
+                    <option value="interior">Ropa interior</option>
+                </select>
+
+                <label>Sexo:</label>
+                <select id="add-gender">
+                    <option value="mixto">Mixto</option>
+                    <option value="hombre">Hombre</option>
+                    <option value="mujer">Mujer</option>
+                </select>
+
+                <label>Clima:</label>
+                <select id="add-climate">
+                    <option value="calor">Calor</option>
+                    <option value="frio">Frío</option>
+                    <option value="lluvia">Lluvia</option>
+                </select>
+
+                <button type="submit" class="btn-contact">Guardar en Firebase</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Botón flotante del Carrito -->
+    <button id="btn-carrito" class="cart-button">
+        🛒 <span id="cart-total">$0</span>
+    </button>
+
+    <!-- Pie de página -->
+    <footer class="main-footer">
+        <p>&copy; 2026 Venta de Ropa. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Script Principal como Módulo ESM -->
+    <script type="module" src="js.js"></script>
+</body>
+</html>
