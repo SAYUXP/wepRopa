@@ -1,7 +1,7 @@
 // Importación de módulos de Firebase desde CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, deleteDoc, updateDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 // Tu configuración de Firebase
 const firebaseConfig = {
@@ -74,8 +74,14 @@ function renderizarProductos(productos) {
         card.dataset.genero = prod.genero;
         card.dataset.clima = prod.clima;
 
+        // Estado de disponibilidad
+        const estaAgotado = prod.agotado || false;
+
         card.innerHTML = `
-            <img class="product-image" src="${prod.imagen}" alt="${prod.titulo}">
+            <div class="image-container">
+                <img class="product-image" src="${prod.imagen}" alt="${prod.titulo}">
+                ${estaAgotado ? '<div class="badge-agotado">AGOTADO</div>' : ''}
+            </div>
             <div class="product-info">
                 <h2 class="product-title">${prod.titulo}</h2>
                 <div class="product-tags">
@@ -84,12 +90,27 @@ function renderizarProductos(productos) {
                     <span class="tag"><b>Clima:</b> ${prod.clima.charAt(0).toUpperCase() + prod.clima.slice(1)}</span>
                 </div>
                 <p class="product-price" data-precio="${prod.precio}">$${Number(prod.precio).toLocaleString('es-AR')}</p>
-                <button class="btn-add-cart">Agregar al carrito</button>
+                <button class="btn-add-cart" ${estaAgotado ? 'disabled' : ''}>
+                    ${estaAgotado ? 'Sin Stock' : 'Agregar al carrito'}
+                </button>
             </div>
         `;
 
-        // Botón de eliminar si está en Modo Admin
+        // Acciones exclusivas en Modo Admin
         if (esAdmin) {
+            const adminContainer = document.createElement('div');
+            adminContainer.classList.add('admin-card-actions');
+
+            // Botón alternar Agotado/Disponible
+            const btnToggleAgotado = document.createElement('button');
+            btnToggleAgotado.classList.add('btn-toggle-agotado');
+            btnToggleAgotado.innerText = estaAgotado ? '✅ Marcar Disponible' : '⚠️ Marcar Agotado';
+            btnToggleAgotado.addEventListener('click', async () => {
+                const docRef = doc(db, "productos", prod.id);
+                await updateDoc(docRef, { agotado: !estaAgotado });
+            });
+
+            // Botón Eliminar
             const btnDelete = document.createElement('button');
             btnDelete.classList.add('btn-delete-prod');
             btnDelete.innerText = '🗑️ Eliminar';
@@ -98,14 +119,19 @@ function renderizarProductos(productos) {
                     await deleteDoc(doc(db, "productos", prod.id));
                 }
             });
-            card.querySelector('.product-info').appendChild(btnDelete);
+
+            adminContainer.appendChild(btnToggleAgotado);
+            adminContainer.appendChild(btnDelete);
+            card.querySelector('.product-info').appendChild(adminContainer);
         }
 
-        // Evento agregar al carrito
-        card.querySelector('.btn-add-cart').addEventListener('click', () => {
-            carrito.push({ id: prod.id, titulo: prod.titulo, precio: Number(prod.precio) });
-            actualizarCarrito();
-        });
+        // Evento agregar al carrito (Solo si hay stock)
+        if (!estaAgotado) {
+            card.querySelector('.btn-add-cart').addEventListener('click', () => {
+                carrito.push({ id: prod.id, titulo: prod.titulo, precio: Number(prod.precio) });
+                actualizarCarrito();
+            });
+        }
 
         productGrid.appendChild(card);
     });
@@ -189,6 +215,7 @@ formAddProduct.addEventListener('submit', async (e) => {
         categoria: document.getElementById('add-category').value,
         genero: document.getElementById('add-gender').value,
         clima: document.getElementById('add-climate').value,
+        agotado: false, // Por defecto inicia disponible
         creadoEn: new Date()
     };
 
@@ -253,9 +280,8 @@ modalCarrito.addEventListener('click', (e) => {
     if (e.target === modalCarrito) modalCarrito.classList.remove('active');
 });
 
-// Número de teléfono (poné tu número con código de país, sin el + ni espacios)
-// Ejemplo para Argentina: "5491122334455"
-const NUMERO_WHATSAPP = "+5492995315935"; 
+// Número de teléfono sin el signo "+" para la URL de WhatsApp
+const NUMERO_WHATSAPP = "5492995315935"; 
 
 btnContactar.addEventListener('click', () => {
     if (carrito.length === 0) {
@@ -263,28 +289,20 @@ btnContactar.addEventListener('click', () => {
         return;
     }
 
-    // Encabezado del mensaje
     let mensaje = "Hola, quisiera confirmar el stock de lo siguiente y forma de pagos y adquisición:\n\n";
 
-    // Recorremos los productos del carrito
-    carrito.forEach((prod, index) => {
+    carrito.forEach((prod) => {
         mensaje += `• ${prod.titulo} - $${prod.precio.toLocaleString('es-AR')}\n`;
     });
 
-    // Total final
     const total = carrito.reduce((sum, item) => sum + item.precio, 0);
     mensaje += `\n*Total:* $${total.toLocaleString('es-AR')}`;
 
-    // Convertimos el texto para URL (encodeURIComponent para guias, saltos de línea y espacios)
     const mensajeURL = encodeURIComponent(mensaje);
-
-    // Enlace directo a WhatsApp API
     const urlWhatsApp = `https://wa.me/${NUMERO_WHATSAPP}?text=${mensajeURL}`;
 
-    // Abrir en una pestaña nueva
     window.open(urlWhatsApp, '_blank');
 });
-
 
 // ==========================================
 // 5. FILTRADO DE PRODUCTOS
